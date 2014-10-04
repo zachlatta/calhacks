@@ -11,9 +11,19 @@ import (
 
 	"github.com/calhacks/calhacks/datastore"
 	"github.com/calhacks/calhacks/httputil"
+	"github.com/calhacks/calhacks/router"
+	"github.com/gorilla/mux"
 
 	"code.google.com/p/go.net/context"
 )
+
+func Handler() *mux.Router {
+	m := router.API()
+	// TODO: m.Get(router.Challenge).Handler(bufHandler(getPost))
+	// TODO: m.Get(router.SubmitChallenge).Handler(bufHandler(submitChallenge))
+	// TODO: m.Get(router.CurrentChallenge).Handler(bufHandler(currentChallenge))
+	return m
+}
 
 func ctxWithCancelAndTx() (context.Context, context.CancelFunc, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -24,9 +34,9 @@ func ctxWithCancelAndTx() (context.Context, context.CancelFunc, error) {
 	return ctx, cancel, nil
 }
 
-type Handler func(context.Context, http.ResponseWriter, *http.Request)
+type handler func(context.Context, http.ResponseWriter, *http.Request)
 
-func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel, err := ctxWithCancelAndTx()
 	if err != nil {
 		handleAPIError(w, r, http.StatusInternalServerError, err, false)
@@ -36,12 +46,12 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h(ctx, w, r)
 }
 
-// BufHandler is a buffered request handler that simplifies returning errors.
+// bufHandler is a buffered request handler that simplifies returning errors.
 // It's great for normal HTTP requests, but won't work for things like
 // websockets.
-type BufHandler func(context.Context, http.ResponseWriter, *http.Request) error
+type bufHandler func(context.Context, http.ResponseWriter, *http.Request) error
 
-func (h BufHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h bufHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rv := recover(); rv != nil {
 			err := errors.New("handler panic")

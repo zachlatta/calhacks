@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/calhacks/calhacks/datastore"
-	"github.com/gorilla/mux"
+	"github.com/calhacks/calhacks/handler"
 )
 
 func main() {
@@ -17,8 +17,8 @@ func main() {
 	datastore.Connect()
 	defer datastore.Disconnect()
 
-	r := mux.NewRouter()
+	m := http.NewServeMux()
+	m.Handle("/api/", http.StripPrefix("/api", handler.Handler()))
 
-	http.Handle("/", r)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+port, m)
 }
