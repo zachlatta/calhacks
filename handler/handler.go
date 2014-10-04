@@ -22,6 +22,7 @@ func Handler() *mux.Router {
 	m.Get(router.SubmitChallenge).Handler(bufHandler(submitChallenge))
 	// TODO: m.Get(router.Challenge).Handler(bufHandler(getPost))
 	// TODO: m.Get(router.CurrentChallenge).Handler(bufHandler(currentChallenge))
+	m.Get(router.WebsocketConnect).Handler(handler(wsConnect))
 	return m
 }
 

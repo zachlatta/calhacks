@@ -4,7 +4,7 @@ db:
   - "5432"
 web:
   build: .
-  command: gin
+  command: gin -t ../..
   volumes:
   - .:/go/src/github.com/calhacks/calhacks
   ports:

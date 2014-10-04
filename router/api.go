@@ -7,5 +7,6 @@ func API() *mux.Router {
 	m.Path("/challenges").Methods("POST").Name(SubmitChallenge)
 	m.Path("/challenges/current").Methods("GET").Name(CurrentChallenge)
 	m.Path("/challenges/{ID:.+}").Methods("GET").Name(Challenge)
+	m.Path("/connect").Methods("GET").Name(WebsocketConnect)
 	return m
 }

@@ -8,6 +8,6 @@ ENV PATH /go/bin:$PATH
 RUN go get github.com/codegangsta/gin
 RUN go get bitbucket.org/liamstask/goose/cmd/goose
 
-WORKDIR /go/src/github.com/calhacks/calhacks
+WORKDIR /go/src/github.com/calhacks/calhacks/cmd/calhacks
 ADD . /go/src/github.com/calhacks/calhacks
 RUN go get
