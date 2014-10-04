@@ -19,8 +19,8 @@ import (
 
 func Handler() *mux.Router {
 	m := router.API()
+	m.Get(router.SubmitChallenge).Handler(bufHandler(submitChallenge))
 	// TODO: m.Get(router.Challenge).Handler(bufHandler(getPost))
-	// TODO: m.Get(router.SubmitChallenge).Handler(bufHandler(submitChallenge))
 	// TODO: m.Get(router.CurrentChallenge).Handler(bufHandler(currentChallenge))
 	return m
 }
@@ -42,6 +42,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handleAPIError(w, r, http.StatusInternalServerError, err, false)
 	}
 	defer cancel()
+	tx, _ := datastore.TxFromContext(ctx)
+	defer tx.Commit()
 
 	h(ctx, w, r)
 }
@@ -70,17 +72,21 @@ func (h bufHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cancel()
 
+	tx, _ := datastore.TxFromContext(ctx)
 	err = h(ctx, &rb, r)
 	if err == nil {
 		rb.WriteTo(w)
+		tx.Commit()
 	} else if e, ok := err.(*httputil.HTTPError); ok {
 		if e.Status >= 500 {
 			logError(r, err, nil)
 		}
 		handleAPIError(w, r, e.Status, e.Err, true)
+		tx.Rollback()
 	} else {
 		logError(r, err, nil)
 		handleAPIError(w, r, http.StatusInternalServerError, err, false)
+		tx.Rollback()
 	}
 }
 
