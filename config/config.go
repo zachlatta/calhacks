@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"code.google.com/p/goauth2/oauth"
-
 	"github.com/kylelemons/go-gypsy/yaml"
 	"github.com/zachlatta/calhacks/osutil"
 )
@@ -88,4 +87,12 @@ func HomepageURL() string {
 
 func JWTSecret() string {
 	return Get("JWT_SECRET")
+}
+
+func RedisServer() string {
+	return Get("REDIS_SERVER")
+}
+
+func RedisPassword() string {
+	return Get("REDIS_PASSWORD")
 }

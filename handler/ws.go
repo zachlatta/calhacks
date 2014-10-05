@@ -3,10 +3,10 @@ package handler
 import (
 	"net/http"
 
+	"github.com/gorilla/websocket"
 	"github.com/zachlatta/calhacks"
 	"github.com/zachlatta/calhacks/datastore"
 	"github.com/zachlatta/calhacks/game"
-	"github.com/gorilla/websocket"
 
 	"code.google.com/p/go.net/context"
 )
@@ -29,6 +29,6 @@ func wsConnect(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	c := game.NewConn(ws, make(chan []byte, 256), user)
+	c := game.NewConn(ws, make(chan interface{}), user)
 	calhacks.Game.Hub.RegisterAndProcessConn(c)
 }
