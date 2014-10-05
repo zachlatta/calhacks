@@ -17,10 +17,11 @@ const (
 type conn struct {
 	ws   *websocket.Conn
 	send chan []byte
+	user *model.User
 }
 
-func NewConn(ws *websocket.Conn, send chan []byte) *conn {
-	return &conn{ws: ws, send: send}
+func NewConn(ws *websocket.Conn, send chan []byte, u *model.User) *conn {
+	return &conn{ws: ws, send: send, user: u}
 }
 
 func (c *conn) readPump(h *hub) {

@@ -29,6 +29,6 @@ func wsConnect(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	c := game.NewConn(ws, make(chan []byte, 256))
+	c := game.NewConn(ws, make(chan []byte, 256), user)
 	calhacks.Game.Hub.RegisterAndProcessConn(c)
 }
