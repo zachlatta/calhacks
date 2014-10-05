@@ -37,7 +37,8 @@ func prepareContext(r *http.Request) (context.Context, context.CancelFunc,
 	if err != nil {
 		return nil, nil, err
 	}
-	if r.Header.Get("Authorization") != "" {
+	if r.Header.Get("Authorization") != "" ||
+		r.URL.Query().Get("access_token") != "" {
 		ctx, err = datastore.NewContextWithUser(ctx, r)
 		if err != nil {
 			return nil, nil, err

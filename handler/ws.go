@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/calhacks/calhacks"
+	"github.com/calhacks/calhacks/datastore"
 	"github.com/calhacks/calhacks/game"
 	"github.com/gorilla/websocket"
 
@@ -19,7 +20,11 @@ var upgrader = websocket.Upgrader{
 }
 
 func wsConnect(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	_ = r.URL.Query().Get("access_token")
+	user, _ := datastore.UserFromContext(ctx)
+	if user == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return

@@ -76,8 +76,7 @@ func NewContextWithUser(ctx context.Context,
 	return context.WithValue(ctx, userKey, user), nil
 }
 
-func UserFromContext(ctx context.Context,
-	r *http.Request) (*model.User, bool) {
+func UserFromContext(ctx context.Context) (*model.User, bool) {
 	user, ok := ctx.Value(userKey).(*model.User)
 	return user, ok
 }

@@ -15,3 +15,8 @@ func validationError(message string) *httputil.HTTPError {
 func badRequest(err error) *httputil.HTTPError {
 	return &httputil.HTTPError{http.StatusBadRequest, err}
 }
+
+func unauthorized() *httputil.HTTPError {
+	return &httputil.HTTPError{http.StatusUnauthorized,
+		errors.New("unauthorized")}
+}
