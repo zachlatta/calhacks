@@ -21,7 +21,7 @@ func main() {
 	go calhacks.Game.Run()
 
 	m := http.NewServeMux()
-	m.Handle("/api/", http.StripPrefix("/api", handler.Handler()))
+	m.Handle("/", handler.Handler())
 
 	http.ListenAndServe(":"+port, m)
 }
