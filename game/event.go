@@ -3,8 +3,12 @@ package game
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"strings"
 
+	"code.google.com/p/go.net/context"
+
+	"github.com/zachlatta/calhacks/datastore"
 	"github.com/zachlatta/calhacks/model"
 )
 
@@ -116,12 +120,36 @@ func (e *event) UnmarshalJSON(data []byte) error {
 func processEvent(h *hub, e *event) {
 	switch e.Type {
 	case runCode:
+		ctx, cancel := context.WithCancel(context.Background())
+		ctx, err := datastore.NewContextWithTx(ctx)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer cancel()
+
+		tx, _ := datastore.TxFromContext(ctx)
+		defer tx.Commit()
+
 		evt := e.Body.(runCodeEvent)
 		dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(evt.Code))
+
+		chlngID, err := h.game.currentChallengeID()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		chlng, err := datastore.GetChallenge(ctx, chlngID)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
 		h.game.dockerRunner.jobs <- &dockerTask{
-			c:    h.conns[e.UserID],
-			code: dec,
-			lang: evt.Lang,
+			c:     h.conns[e.UserID],
+			code:  dec,
+			lang:  evt.Lang,
+			chlng: chlng,
 		}
 	}
 }
