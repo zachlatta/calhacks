@@ -57,7 +57,7 @@ func oauthAccessToken(ctx context.Context, w http.ResponseWriter,
 		return err
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s/#/?tok=%s", config.HomepageURL(),
+	http.Redirect(w, r, fmt.Sprintf("%s/login?tok=%s", config.HomepageURL(),
 		jwtTok), http.StatusTemporaryRedirect)
 	return nil
 }
