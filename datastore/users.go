@@ -2,7 +2,7 @@ package datastore
 
 import (
 	"time"
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/model"
 
 	"code.google.com/p/go.net/context"
 )

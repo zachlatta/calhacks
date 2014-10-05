@@ -8,9 +8,9 @@ import (
 
 	"code.google.com/p/go.net/context"
 
-	"github.com/calhacks/calhacks/config"
-	"github.com/calhacks/calhacks/httputil"
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/config"
+	"github.com/zachlatta/calhacks/httputil"
+	"github.com/zachlatta/calhacks/model"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"
 )

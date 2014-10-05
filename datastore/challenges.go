@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"code.google.com/p/go.net/context"
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/model"
 )
 
 const createChlngStmt = `INSERT INTO challenges (created, updated, title,

@@ -6,7 +6,7 @@ import (
 
 	"code.google.com/p/goauth2/oauth"
 
-	"github.com/calhacks/calhacks/osutil"
+	"github.com/zachlatta/calhacks/osutil"
 	"github.com/kylelemons/go-gypsy/yaml"
 )
 
@@ -19,7 +19,7 @@ var (
 
 func init() {
 	baseCfgPath, err := osutil.ResolveFilePathInEnv("GOPATH",
-		"/src/github.com/calhacks/calhacks/")
+		"/src/github.com/zachlatta/calhacks/")
 	if err != nil {
 		panic(err)
 	}

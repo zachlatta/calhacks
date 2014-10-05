@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/calhacks/calhacks/httputil"
+	"github.com/zachlatta/calhacks/httputil"
 )
 
 func validationError(message string) *httputil.HTTPError {

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/calhacks/calhacks/config"
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/config"
+	"github.com/zachlatta/calhacks/model"
 	"github.com/dgrijalva/jwt-go"
 )
 

@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/calhacks/calhacks"
-	"github.com/calhacks/calhacks/datastore"
-	"github.com/calhacks/calhacks/game"
+	"github.com/zachlatta/calhacks"
+	"github.com/zachlatta/calhacks/datastore"
+	"github.com/zachlatta/calhacks/game"
 	"github.com/gorilla/websocket"
 
 	"code.google.com/p/go.net/context"

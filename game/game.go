@@ -3,7 +3,7 @@ package game
 import (
 	"time"
 
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/model"
 	"github.com/gorilla/websocket"
 )
 

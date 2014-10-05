@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/calhacks/calhacks/config"
-	"github.com/calhacks/calhacks/datastore"
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/config"
+	"github.com/zachlatta/calhacks/datastore"
+	"github.com/zachlatta/calhacks/model"
 	"github.com/google/go-github/github"
 
 	"code.google.com/p/go.net/context"

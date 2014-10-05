@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/calhacks/calhacks/datastore"
-	"github.com/calhacks/calhacks/httputil"
-	"github.com/calhacks/calhacks/router"
+	"github.com/zachlatta/calhacks/datastore"
+	"github.com/zachlatta/calhacks/httputil"
+	"github.com/zachlatta/calhacks/router"
 	"github.com/gorilla/mux"
 
 	"code.google.com/p/go.net/context"

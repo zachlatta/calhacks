@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/calhacks/calhacks/datastore"
-	"github.com/calhacks/calhacks/model"
+	"github.com/zachlatta/calhacks/datastore"
+	"github.com/zachlatta/calhacks/model"
 
 	"code.google.com/p/go.net/context"
 )

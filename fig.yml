@@ -6,7 +6,7 @@ web:
   build: .
   command: gin -t ../..
   volumes:
-  - .:/go/src/github.com/calhacks/calhacks
+  - .:/go/src/github.com/zachlatta/calhacks
   - /var/run/docker.sock:/var/run/docker.sock
   ports:
   - "3000:3000"

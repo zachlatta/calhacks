@@ -1,5 +1,5 @@
 package calhacks
 
-import "github.com/calhacks/calhacks/game"
+import "github.com/zachlatta/calhacks/game"
 
 var Game = game.NewGame()

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/calhacks/calhacks"
-	"github.com/calhacks/calhacks/datastore"
-	"github.com/calhacks/calhacks/handler"
+	"github.com/zachlatta/calhacks"
+	"github.com/zachlatta/calhacks/datastore"
+	"github.com/zachlatta/calhacks/handler"
 )
 
 func main() {
