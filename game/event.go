@@ -1,7 +1,9 @@
 package game
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"strings"
 
 	"github.com/zachlatta/calhacks/model"
 )
@@ -15,6 +17,8 @@ const (
 	timerFinished
 	challengeSet
 	breakStarted
+	runCode
+	codeRan
 )
 
 type userJoinedEvent struct {
@@ -32,6 +36,16 @@ type timerChangedEvent struct {
 
 type challengeSetEvent struct {
 	Challenge *model.Challenge `json:"challenge"`
+}
+
+type runCodeEvent struct {
+	Code string `json:"code"`
+	Lang string `json:"lang"`
+}
+
+type codeRanEvent struct {
+	Output string `json:"output"`
+	Passed bool   `json:"passed"`
 }
 
 type event struct {
@@ -85,11 +99,29 @@ func (e *event) UnmarshalJSON(data []byte) error {
 		e.Body = wrapper.Body
 	case breakStarted:
 		e.Body = nil
+	case runCode:
+		var wrapper struct {
+			Body runCodeEvent `json:"body"`
+		}
+		if err := json.Unmarshal(data, &wrapper); err != nil {
+			return err
+		}
+		e.Body = wrapper.Body
+	case codeRan:
+		e.Body = nil
 	}
 	return nil
 }
 
 func processEvent(h *hub, e *event) {
 	switch e.Type {
+	case runCode:
+		evt := e.Body.(runCodeEvent)
+		dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(evt.Code))
+		h.game.dockerRunner.jobs <- &dockerTask{
+			c:    h.conns[e.UserID],
+			code: dec,
+			lang: evt.Lang,
+		}
 	}
 }

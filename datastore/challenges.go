@@ -9,13 +9,14 @@ import (
 )
 
 const createChlngStmt = `INSERT INTO challenges (created, updated, title,
-description, seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id`
+description, seconds, expected_output) VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id`
 
 const createTestCaseStmt = `INSERT INTO challenge_test_cases (created, updated,
 challenge_id) VALUES ($1, $2, $3) RETURNING id`
 
-const getChlngStmt = `SELECT id, created, updated, title, description, seconds
-FROM challenges WHERE id=$1`
+const getChlngStmt = `SELECT id, created, updated, title, description, seconds,
+expected_output FROM challenges WHERE id=$1`
 
 const getChlngTestCasesStmt = `
 SELECT id, created, updated
@@ -41,7 +42,7 @@ func SaveChallenge(ctx context.Context, c *model.Challenge) error {
 
 	if newChallenge {
 		rows, err := tx.Query(createChlngStmt, c.Created, c.Updated, c.Title,
-			c.Description, c.Seconds)
+			c.Description, c.Seconds, c.ExpectedOutput)
 		if err != nil {
 			return err
 		}
@@ -102,7 +103,7 @@ func GetChallenge(ctx context.Context, id int64) (*model.Challenge, error) {
 	c := model.Challenge{}
 	row := tx.QueryRow(getChlngStmt, id)
 	if err := row.Scan(&c.ID, &c.Created, &c.Updated, &c.Title, &c.Description,
-		&c.Seconds); err != nil {
+		&c.Seconds, &c.ExpectedOutput); err != nil {
 		return nil, err
 	}
 	rows, err := tx.Query(getChlngTestCasesStmt, id)

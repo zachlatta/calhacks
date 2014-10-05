@@ -119,7 +119,6 @@ func (h *hub) run() {
 						}
 					}
 				case e := <-h.events:
-					fmt.Println(e)
 					processEvent(h, e)
 				case m := <-h.broadcast:
 					for _, c := range h.conns {
@@ -153,6 +152,7 @@ type game struct {
 	CurrentChallenge *model.Challenge
 	Hub              hub
 	pool             *redis.Pool
+	dockerRunner     *dockerRunner
 }
 
 func NewGame() *game {
@@ -186,8 +186,12 @@ func NewGame() *game {
 				return err
 			},
 		},
+		dockerRunner: &dockerRunner{
+			WorkerCount: 32,
+		},
 	}
 	g.Hub.game = g
+	g.dockerRunner.hub = &g.Hub
 	return g
 }
 
@@ -425,4 +429,5 @@ func (g *game) Run() {
 	g.setTimeRemaining(5)
 	go g.Hub.run()
 	go g.startTimer()
+	go g.dockerRunner.Run()
 }

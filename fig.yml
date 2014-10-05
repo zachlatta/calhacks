@@ -12,6 +12,7 @@ web:
   volumes:
   - .:/go/src/github.com/zachlatta/calhacks
   - /var/run/docker.sock:/var/run/docker.sock
+  - /tmp/calhacks:/tmp/calhacks
   ports:
   - "3000:3000"
   links:
