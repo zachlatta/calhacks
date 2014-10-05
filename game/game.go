@@ -107,6 +107,7 @@ func (h *hub) run() {
 				select {
 				case c := <-h.register:
 					h.conns[c.user.ID] = c
+					sendInitialState(h, c)
 					if err := h.game.addCurrentUser(c.user); err != nil {
 						log.Println(err)
 					}
@@ -279,6 +280,16 @@ func (g *game) removeCurrentUser(id int64) error {
 	}
 	g.Hub.broadcast <- evt
 	return nil
+}
+
+func (g *game) timeRemaining() (remaining int, err error) {
+	c := g.pool.Get()
+	defer c.Close()
+	remaining, err = redis.Int(c.Do("GET", timeRemainingKey))
+	if err != nil {
+		return 0, err
+	}
+	return remaining, err
 }
 
 func (g *game) decrTimeRemaining() (finished bool, remaining int,

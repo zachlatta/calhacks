@@ -23,6 +23,7 @@ const (
 	breakStarted
 	runCode
 	codeRan
+	initialState
 )
 
 type userJoinedEvent struct {
@@ -50,6 +51,13 @@ type runCodeEvent struct {
 type codeRanEvent struct {
 	Output string `json:"output"`
 	Passed bool   `json:"passed"`
+}
+
+type initialStateEvent struct {
+	CurrentChallenge     *model.Challenge `json:"current_challenge"`
+	CurrentUsers         []*model.User    `json:"current_users"`
+	CurrentTimeRemaining int              `json:"time_remaining"`
+	TotalTime            int              `json:"total_time"`
 }
 
 type event struct {
@@ -113,6 +121,14 @@ func (e *event) UnmarshalJSON(data []byte) error {
 		e.Body = wrapper.Body
 	case codeRan:
 		e.Body = nil
+	case initialState:
+		var wrapper struct {
+			Body initialStateEvent `json:"body"`
+		}
+		if err := json.Unmarshal(data, &wrapper); err != nil {
+			return err
+		}
+		e.Body = wrapper.Body
 	}
 	return nil
 }
@@ -151,5 +167,69 @@ func processEvent(h *hub, e *event) {
 			lang:  evt.Lang,
 			chlng: chlng,
 		}
+	}
+}
+
+func sendInitialState(h *hub, c *conn) {
+	ctx, cancel := context.WithCancel(context.Background())
+	ctx, err := datastore.NewContextWithTx(ctx)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer cancel()
+
+	tx, _ := datastore.TxFromContext(ctx)
+	defer tx.Commit()
+
+	chlngID, err := h.game.currentChallengeID()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	chlng, err := datastore.GetChallenge(ctx, chlngID)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	userIDs, err := h.game.currentUserIDs()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	users := make([]*model.User, len(userIDs))
+	for i, id := range userIDs {
+		var err error
+		users[i], err = datastore.GetUser(ctx, id)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
+
+	timeRemaining, err := h.game.timeRemaining()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	totalTime, err := h.game.totalTime()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	c.send <- &event{
+		Type:   initialState,
+		UserID: -1,
+		Body: &initialStateEvent{
+			CurrentChallenge:     chlng,
+			CurrentUsers:         users,
+			CurrentTimeRemaining: timeRemaining,
+			TotalTime:            totalTime,
+		},
 	}
 }
