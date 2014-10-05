@@ -60,5 +60,6 @@ func oauthAccessToken(ctx context.Context, w http.ResponseWriter,
 		Name:  "tok",
 		Value: jwtTok,
 	})
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	return nil
 }
