@@ -22,6 +22,7 @@ func main() {
 
 	m := http.NewServeMux()
 	m.Handle("/api/", http.StripPrefix("/api", handler.Handler()))
+	m.Handle("/", http.FileServer(http.Dir("../../static")))
 
 	http.ListenAndServe(":"+port, m)
 }
