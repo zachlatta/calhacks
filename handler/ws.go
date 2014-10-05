@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -23,6 +24,11 @@ func wsConnect(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	user, _ := datastore.UserFromContext(ctx)
 	if user == nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if calhacks.Game.Hub.ConnForUserExists(user) {
+		handleAPIError(w, r, http.StatusConflict,
+			errors.New("connection for user already exists"), true)
 		return
 	}
 	ws, err := upgrader.Upgrade(w, r, nil)

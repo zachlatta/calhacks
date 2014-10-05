@@ -11,6 +11,10 @@ type eventType int
 const (
 	userJoined eventType = iota
 	userLeft
+	timerChanged
+	timerFinished
+	challengeSet
+	breakStarted
 )
 
 type userJoinedEvent struct {
@@ -21,10 +25,18 @@ type userLeftEvent struct {
 	UserID int64 `json:"user_id"`
 }
 
+type timerChangedEvent struct {
+	Remaining int `json:"remaining"`
+}
+
+type challengeSetEvent struct {
+	Challenge *model.Challenge `json:"challenge"`
+}
+
 type event struct {
 	Type   eventType   `json:"type"`
 	UserID int64       `json:"user_id"`
-	Body   interface{} `json:"body"`
+	Body   interface{} `json:"body,omitempty"`
 }
 
 func (e *event) UnmarshalJSON(data []byte) error {
@@ -52,6 +64,26 @@ func (e *event) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		e.Body = wrapper.Body
+	case timerChanged:
+		var wrapper struct {
+			Body timerChangedEvent `json:"body"`
+		}
+		if err := json.Unmarshal(data, &wrapper); err != nil {
+			return err
+		}
+		e.Body = wrapper.Body
+	case timerFinished:
+		e.Body = nil
+	case challengeSet:
+		var wrapper struct {
+			Body challengeSetEvent `json:"body"`
+		}
+		if err := json.Unmarshal(data, &wrapper); err != nil {
+			return err
+		}
+		e.Body = wrapper.Body
+	case breakStarted:
+		e.Body = nil
 	}
 	return nil
 }

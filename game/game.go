@@ -7,9 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"code.google.com/p/go.net/context"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/websocket"
 	"github.com/zachlatta/calhacks/config"
+	"github.com/zachlatta/calhacks/datastore"
 	"github.com/zachlatta/calhacks/model"
 )
 
@@ -82,7 +85,7 @@ func (c *conn) writePump() {
 }
 
 type hub struct {
-	conns      map[*conn]bool
+	conns      map[int64]*conn
 	events     chan *event
 	broadcast  chan interface{}
 	register   chan *conn
@@ -97,30 +100,32 @@ func (h *hub) run() {
 	for i := 0; i < 8; i++ {
 		go func() {
 			defer wg.Done()
-			select {
-			case c := <-h.register:
-				h.conns[c] = true
-				if err := h.game.addCurrentUser(c.user); err != nil {
-					log.Println(err)
-				}
-			case c := <-h.unregister:
-				if _, ok := h.conns[c]; ok {
-					delete(h.conns, c)
-					close(c.send)
-					if err := h.game.removeCurrentUser(c.user.ID); err != nil {
+			for {
+				select {
+				case c := <-h.register:
+					h.conns[c.user.ID] = c
+					if err := h.game.addCurrentUser(c.user); err != nil {
 						log.Println(err)
 					}
-				}
-			case e := <-h.events:
-				fmt.Println(e)
-				processEvent(h, e)
-			case m := <-h.broadcast:
-				for c := range h.conns {
-					select {
-					case c.send <- m:
-					default:
+				case c := <-h.unregister:
+					if _, ok := h.conns[c.user.ID]; ok {
+						delete(h.conns, c.user.ID)
 						close(c.send)
-						delete(h.conns, c)
+						if err := h.game.removeCurrentUser(c.user.ID); err != nil {
+							log.Println(err)
+						}
+					}
+				case e := <-h.events:
+					fmt.Println(e)
+					processEvent(h, e)
+				case m := <-h.broadcast:
+					for _, c := range h.conns {
+						select {
+						case c.send <- m:
+						default:
+							close(c.send)
+							delete(h.conns, c.user.ID)
+						}
 					}
 				}
 			}
@@ -136,12 +141,10 @@ func (h *hub) RegisterAndProcessConn(c *conn) {
 	c.readPump(h)
 }
 
-type redisKey string
-
-const (
-	currentChallengeIDKey redisKey = "current_challenge_id"
-	currentUserIDsKey     redisKey = "current_users"
-)
+func (h *hub) ConnForUserExists(user *model.User) bool {
+	_, ok := h.conns[user.ID]
+	return ok
+}
 
 type game struct {
 	CurrentChallenge *model.Challenge
@@ -156,7 +159,7 @@ func NewGame() *game {
 			events:     make(chan *event),
 			register:   make(chan *conn),
 			unregister: make(chan *conn),
-			conns:      make(map[*conn]bool),
+			conns:      make(map[int64]*conn),
 		},
 		pool: &redis.Pool{
 			MaxIdle:     3,
@@ -185,9 +188,14 @@ func NewGame() *game {
 	return g
 }
 
-func (g *game) Run() {
-	go g.Hub.run()
-}
+type redisKey string
+
+const (
+	currentChallengeIDKey redisKey = "current_challenge_id"
+	currentUserIDsKey     redisKey = "current_users"
+	timeRemainingKey      redisKey = "time_remaining"
+	breakKey              redisKey = "break"
+)
 
 func (g *game) currentChallengeID() (int64, error) {
 	c := g.pool.Get()
@@ -195,10 +203,22 @@ func (g *game) currentChallengeID() (int64, error) {
 	return redis.Int64(c.Do("GET", currentChallengeIDKey))
 }
 
-func (g *game) setCurrentChallengeID(id int64) error {
+func (g *game) setCurrentChallenge(chlng *model.Challenge) error {
 	c := g.pool.Get()
 	defer c.Close()
-	return (c.Send("SET", currentChallengeIDKey, id))
+	if err := c.Send("SET", currentChallengeIDKey, chlng.ID); err != nil {
+		return err
+	}
+
+	g.Hub.broadcast <- &event{
+		Type:   challengeSet,
+		UserID: -1,
+		Body: &challengeSetEvent{
+			Challenge: chlng,
+		},
+	}
+
+	return nil
 }
 
 func (g *game) currentUserIDs() ([]int64, error) {
@@ -251,4 +271,133 @@ func (g *game) removeCurrentUser(id int64) error {
 	}
 	g.Hub.broadcast <- evt
 	return nil
+}
+
+func (g *game) decrTimeRemaining() (finished bool, remaining int,
+	err error) {
+	c := g.pool.Get()
+	defer c.Close()
+	remaining, err = redis.Int(c.Do("DECR", timeRemainingKey))
+	if err != nil {
+		return false, 0, err
+	}
+	if remaining <= 0 {
+		finished = true
+	}
+	return finished, remaining, err
+}
+
+func (g *game) setTimeRemaining(seconds int) error {
+	c := g.pool.Get()
+	defer c.Close()
+	if err := c.Send("SET", timeRemainingKey, seconds); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *game) isBreak() (bool, error) {
+	c := g.pool.Get()
+	defer c.Close()
+	isBreak, err := redis.Bool(c.Do("GET", breakKey))
+	if err != nil {
+		if err == redis.ErrNil {
+			return false, nil
+		}
+		return false, err
+	}
+	return isBreak, nil
+}
+
+func (g *game) setBreak(isBreak bool) error {
+	c := g.pool.Get()
+	defer c.Close()
+	return c.Send("SET", breakKey, isBreak)
+}
+
+func (g *game) startTimer() {
+	ticker := time.NewTicker(time.Second)
+	for _ = range ticker.C {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("Recovered in f", r)
+			}
+		}()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		ctx, err := datastore.NewContextWithTx(ctx)
+		if err != nil {
+			panic(err)
+			return
+		}
+		defer cancel()
+
+		finished, remaining, err := g.decrTimeRemaining()
+		if err != nil {
+			panic(err)
+			return
+		}
+
+		if finished {
+			g.Hub.broadcast <- &event{
+				Type:   timerFinished,
+				UserID: -1,
+			}
+
+			isBreak, err := g.isBreak()
+			if err != nil {
+				panic(err)
+				return
+			}
+
+			if isBreak {
+				if err := g.setBreak(false); err != nil {
+					panic(err)
+					return
+				}
+
+				challenge, err := datastore.GetRandomChallenge(ctx)
+				if err != nil {
+					panic(err)
+					return
+				}
+
+				if err := g.setCurrentChallenge(challenge); err != nil {
+					panic(err)
+					return
+				}
+				if err := g.setTimeRemaining(challenge.Seconds); err != nil {
+					panic(err)
+					return
+				}
+			} else {
+				if err := g.setBreak(true); err != nil {
+					panic(err)
+					return
+				}
+				if err := g.setTimeRemaining(3); err != nil {
+					panic(err)
+					return
+				}
+				g.Hub.broadcast <- &event{
+					Type:   breakStarted,
+					UserID: -1,
+				}
+			}
+		} else {
+			g.Hub.broadcast <- &event{
+				Type:   timerChanged,
+				UserID: -1,
+				Body: &timerChangedEvent{
+					Remaining: remaining,
+				},
+			}
+		}
+	}
+}
+
+func (g *game) Run() {
+	g.setTimeRemaining(5)
+	go g.Hub.run()
+	go g.startTimer()
 }

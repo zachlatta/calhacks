@@ -23,6 +23,11 @@ FROM challenge_test_cases
 WHERE challenge_id=$1
 `
 
+const getRandChlngIDStmt = `
+SELECT id FROM challenges
+OFFSET random()*(SELECT count(*) FROM challenges)
+LIMIT 1`
+
 // TODO: Cancel if context cancels.
 func SaveChallenge(ctx context.Context, c *model.Challenge) error {
 	tx, _ := TxFromContext(ctx)
@@ -113,4 +118,14 @@ func GetChallenge(ctx context.Context, id int64) (*model.Challenge, error) {
 	}
 
 	return &c, nil
+}
+
+func GetRandomChallenge(ctx context.Context) (*model.Challenge, error) {
+	tx, _ := TxFromContext(ctx)
+	var id int64
+	row := tx.QueryRow(getRandChlngIDStmt)
+	if err := row.Scan(&id); err != nil {
+		return nil, err
+	}
+	return GetChallenge(ctx, id)
 }
