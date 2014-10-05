@@ -1,8 +1,11 @@
 package game
 
 import (
+	"bytes"
+	"database/sql"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -320,7 +323,10 @@ func (g *game) startTimer() {
 	for _ = range ticker.C {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Println("Recovered in f", r)
+				var buf bytes.Buffer
+				fmt.Println("Recover in startTimer:", r)
+				buf.Write(debug.Stack())
+				fmt.Println(buf.String())
 			}
 		}()
 
@@ -330,7 +336,6 @@ func (g *game) startTimer() {
 			panic(err)
 			return
 		}
-		defer cancel()
 
 		finished, remaining, err := g.decrTimeRemaining()
 		if err != nil {
@@ -356,10 +361,20 @@ func (g *game) startTimer() {
 					return
 				}
 
-				challenge, err := datastore.GetRandomChallenge(ctx)
-				if err != nil {
-					panic(err)
-					return
+				var challenge *model.Challenge
+				for {
+					var err error
+					challenge, err = datastore.GetRandomChallenge(ctx)
+					if err != nil {
+						// TODO: Figure out why this is failing instead of working around
+						// with a loop.
+						if err == sql.ErrNoRows {
+							continue
+						}
+						panic(err)
+						return
+					}
+					break
 				}
 
 				if err := g.setCurrentChallenge(challenge); err != nil {
@@ -393,6 +408,9 @@ func (g *game) startTimer() {
 				},
 			}
 		}
+		tx, _ := datastore.TxFromContext(ctx)
+		tx.Commit()
+		cancel()
 	}
 }
 
