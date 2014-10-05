@@ -6,8 +6,8 @@ import (
 
 	"code.google.com/p/goauth2/oauth"
 
-	"github.com/zachlatta/calhacks/osutil"
 	"github.com/kylelemons/go-gypsy/yaml"
+	"github.com/zachlatta/calhacks/osutil"
 )
 
 var (
@@ -80,6 +80,10 @@ func GitHubClientSecret() string {
 
 func RedirectURL() string {
 	return Get("REDIRECT_URL")
+}
+
+func HomepageURL() string {
+	return Get("HOMEPAGE_URL")
 }
 
 func JWTSecret() string {

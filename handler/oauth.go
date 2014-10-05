@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/google/go-github/github"
 	"github.com/zachlatta/calhacks/config"
 	"github.com/zachlatta/calhacks/datastore"
 	"github.com/zachlatta/calhacks/model"
-	"github.com/google/go-github/github"
 
 	"code.google.com/p/go.net/context"
 	"code.google.com/p/goauth2/oauth"
@@ -60,6 +60,6 @@ func oauthAccessToken(ctx context.Context, w http.ResponseWriter,
 		Name:  "tok",
 		Value: jwtTok,
 	})
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, config.HomepageURL(), http.StatusTemporaryRedirect)
 	return nil
 }

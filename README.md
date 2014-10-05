@@ -4,8 +4,9 @@ Put in `config/config.yml`:
 
 ```
 GITHUB_CLIENT_ID: # TODO
-GITHUB_CLIRENT_SECRET: # TODO
-REDIRECT_URL: # TODO
+GITHUB_CLIENT_SECRET: # TODO
+REDIRECT_URL: # TODO - url that github redirects user to
+HOMEPAGE_URL: # TODO - url that user is redirected to after login
 
 JWT_SECRET: # TODO
 ```
