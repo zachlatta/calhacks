@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/gorilla/mux"
 	"github.com/zachlatta/calhacks/datastore"
 	"github.com/zachlatta/calhacks/httputil"
 	"github.com/zachlatta/calhacks/router"
-	"github.com/gorilla/mux"
 
 	"code.google.com/p/go.net/context"
 )
@@ -48,9 +48,23 @@ func prepareContext(r *http.Request) (context.Context, context.CancelFunc,
 	return ctx, cancel, nil
 }
 
+func addCORSHeaders(w http.ResponseWriter) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Methods",
+		"POST, PUT, DELETE, GET, OPTIONS")
+	w.Header().Add("Access-Control-Request-Method", "*")
+	w.Header().Add("Access-Control-Allow-Headers",
+		"Origin, Content-Type, Authorization")
+}
+
 type handler func(context.Context, http.ResponseWriter, *http.Request)
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	addCORSHeaders(w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
 	ctx, cancel, err := prepareContext(r)
 	if err != nil {
 		handleAPIError(w, r, http.StatusInternalServerError, err, false)
@@ -68,6 +82,11 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type bufHandler func(context.Context, http.ResponseWriter, *http.Request) error
 
 func (h bufHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	addCORSHeaders(w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
 	defer func() {
 		if rv := recover(); rv != nil {
 			err := errors.New("handler panic")
