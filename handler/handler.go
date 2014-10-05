@@ -30,19 +30,27 @@ func Handler() *mux.Router {
 	return m
 }
 
-func ctxWithCancelAndTx() (context.Context, context.CancelFunc, error) {
+func prepareContext(r *http.Request) (context.Context, context.CancelFunc,
+	error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx, err := datastore.NewContextWithTx(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
+	if r.Header.Get("Authorization") != "" {
+		ctx, err = datastore.NewContextWithUser(ctx, r)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	return ctx, cancel, nil
 }
 
 type handler func(context.Context, http.ResponseWriter, *http.Request)
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel, err := ctxWithCancelAndTx()
+	ctx, cancel, err := prepareContext(r)
 	if err != nil {
 		handleAPIError(w, r, http.StatusInternalServerError, err, false)
 	}
@@ -71,7 +79,7 @@ func (h bufHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rb  httputil.ResponseBuffer
 		err error
 	)
-	ctx, cancel, err := ctxWithCancelAndTx()
+	ctx, cancel, err := prepareContext(r)
 	if err != nil {
 		handleAPIError(w, r, http.StatusInternalServerError, err, false)
 	}

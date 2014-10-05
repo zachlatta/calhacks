@@ -81,3 +81,7 @@ func GitHubClientSecret() string {
 func RedirectURL() string {
 	return Get("REDIRECT_URL")
 }
+
+func JWTSecret() string {
+	return Get("JWT_SECRET")
+}

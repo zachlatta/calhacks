@@ -51,5 +51,14 @@ func oauthAccessToken(ctx context.Context, w http.ResponseWriter,
 		return err
 	}
 
+	jwtTok, err := createToken(user)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:  "tok",
+		Value: jwtTok,
+	})
 	return nil
 }
