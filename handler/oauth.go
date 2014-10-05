@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/github"
@@ -56,10 +57,7 @@ func oauthAccessToken(ctx context.Context, w http.ResponseWriter,
 		return err
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:  "tok",
-		Value: jwtTok,
-	})
-	http.Redirect(w, r, config.HomepageURL(), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("%s/#/?tok=%s", config.HomepageURL(),
+		jwtTok), http.StatusTemporaryRedirect)
 	return nil
 }
