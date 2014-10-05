@@ -18,9 +18,10 @@ github_id, github_url, access_token, score FROM users WHERE id=$1`
 const getUserByGitHubIDStmt = `SELECT id, created, updated, username,
 profile_picture, github_id, github_url, access_token, score FROM users WHERE
 github_id=$1`
+
 const updateUserStmt = `UPDATE users SET updated=$2, username=$3,
-profile_picture=$4, github_id=$5, github_url=$6, access_token=$7 score=$8 WHERE
-id=$1`
+profile_picture=$4, github_id=$5, github_url=$6, access_token=$7, score=$8
+WHERE id=$1`
 
 func SaveUser(ctx context.Context, u *model.User) error {
 	tx, _ := TxFromContext(ctx)
