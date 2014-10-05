@@ -196,6 +196,7 @@ type redisKey string
 const (
 	currentChallengeIDKey redisKey = "current_challenge_id"
 	currentUserIDsKey     redisKey = "current_users"
+	timeTotalKey          redisKey = "time_total"
 	timeRemainingKey      redisKey = "time_remaining"
 	breakKey              redisKey = "break"
 )
@@ -293,10 +294,19 @@ func (g *game) decrTimeRemaining() (finished bool, remaining int,
 func (g *game) setTimeRemaining(seconds int) error {
 	c := g.pool.Get()
 	defer c.Close()
+	if err := c.Send("SET", timeTotalKey, seconds); err != nil {
+		return err
+	}
 	if err := c.Send("SET", timeRemainingKey, seconds); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (g *game) totalTime() (int, error) {
+	c := g.pool.Get()
+	defer c.Close()
+	return redis.Int(c.Do("GET", timeTotalKey))
 }
 
 func (g *game) isBreak() (bool, error) {
@@ -334,13 +344,16 @@ func (g *game) startTimer() {
 		ctx, err := datastore.NewContextWithTx(ctx)
 		if err != nil {
 			panic(err)
-			return
 		}
 
 		finished, remaining, err := g.decrTimeRemaining()
 		if err != nil {
 			panic(err)
-			return
+		}
+
+		total, err := g.totalTime()
+		if err != nil {
+			panic(err)
 		}
 
 		if finished {
@@ -352,13 +365,11 @@ func (g *game) startTimer() {
 			isBreak, err := g.isBreak()
 			if err != nil {
 				panic(err)
-				return
 			}
 
 			if isBreak {
 				if err := g.setBreak(false); err != nil {
 					panic(err)
-					return
 				}
 
 				var challenge *model.Challenge
@@ -372,27 +383,22 @@ func (g *game) startTimer() {
 							continue
 						}
 						panic(err)
-						return
 					}
 					break
 				}
 
 				if err := g.setCurrentChallenge(challenge); err != nil {
 					panic(err)
-					return
 				}
 				if err := g.setTimeRemaining(challenge.Seconds); err != nil {
 					panic(err)
-					return
 				}
 			} else {
 				if err := g.setBreak(true); err != nil {
 					panic(err)
-					return
 				}
 				if err := g.setTimeRemaining(3); err != nil {
 					panic(err)
-					return
 				}
 				g.Hub.broadcast <- &event{
 					Type:   breakStarted,
@@ -405,6 +411,7 @@ func (g *game) startTimer() {
 				UserID: -1,
 				Body: &timerChangedEvent{
 					Remaining: remaining,
+					Total:     total,
 				},
 			}
 		}

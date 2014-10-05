@@ -26,6 +26,7 @@ type userLeftEvent struct {
 }
 
 type timerChangedEvent struct {
+	Total     int `json:"total"`
 	Remaining int `json:"remaining"`
 }
 
