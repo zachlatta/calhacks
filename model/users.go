@@ -11,4 +11,5 @@ type User struct {
 	GitHubID       int       `json:"-"`
 	GitHubURL      string    `json:"github_url"`
 	AccessToken    string    `json:"-"`
+	Score          int64     `json:"score"`
 }

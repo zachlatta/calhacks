@@ -8,11 +8,11 @@ import (
 
 	"code.google.com/p/go.net/context"
 
+	"github.com/dgrijalva/jwt-go"
+	_ "github.com/lib/pq"
 	"github.com/zachlatta/calhacks/config"
 	"github.com/zachlatta/calhacks/httputil"
 	"github.com/zachlatta/calhacks/model"
-	"github.com/dgrijalva/jwt-go"
-	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
