@@ -2,6 +2,10 @@ db:
   image: orchardup/postgresql
   ports:
   - "5432"
+redis:
+  image: redis
+  ports:
+    - "6379"
 web:
   build: .
   command: gin -t ../..
@@ -12,3 +16,4 @@ web:
   - "3000:3000"
   links:
   - db
+  - redis
