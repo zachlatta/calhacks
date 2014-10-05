@@ -23,6 +23,10 @@ func Handler() *mux.Router {
 	// TODO: m.Get(router.Challenge).Handler(bufHandler(getPost))
 	// TODO: m.Get(router.CurrentChallenge).Handler(bufHandler(currentChallenge))
 	m.Get(router.WebsocketConnect).Handler(handler(wsConnect))
+
+	m.Get(router.OauthLogin).Handler(bufHandler(oauthLogin))
+	m.Get(router.OauthAccessToken).Handler(bufHandler(oauthAccessToken))
+
 	return m
 }
 

@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"code.google.com/p/goauth2/oauth"
+
 	"github.com/calhacks/calhacks/osutil"
 	"github.com/kylelemons/go-gypsy/yaml"
 )
@@ -11,6 +13,8 @@ import (
 var (
 	config   *yaml.File
 	dbConfig *yaml.File
+
+	githubOauthConfig *oauth.Config
 )
 
 func init() {
@@ -32,6 +36,15 @@ func init() {
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatal("Error loading config", err)
 	}
+
+	githubOauthConfig = &oauth.Config{
+		ClientId:     GitHubClientID(),
+		ClientSecret: GitHubClientSecret(),
+		Scope:        "public",
+		AuthURL:      "https://github.com/login/oauth/authorize",
+		TokenURL:     "https://github.com/login/oauth/access_token",
+		RedirectURL:  RedirectURL(),
+	}
 }
 
 func Get(param string) string {
@@ -50,5 +63,21 @@ func DatabaseURL() string {
 		return os.ExpandEnv(
 			"postgres://docker:docker@$DB_1_PORT_5432_TCP_ADDR/docker")
 	}
-	return ""
+	return val
+}
+
+func GitHubOauthConfig() *oauth.Config {
+	return githubOauthConfig
+}
+
+func GitHubClientID() string {
+	return Get("GITHUB_CLIENT_ID")
+}
+
+func GitHubClientSecret() string {
+	return Get("GITHUB_CLIENT_SECRET")
+}
+
+func RedirectURL() string {
+	return Get("REDIRECT_URL")
 }

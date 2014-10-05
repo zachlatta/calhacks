@@ -28,3 +28,4 @@ _testmain.go
 *.prof
 
 gin-bin
+config/config.yml
